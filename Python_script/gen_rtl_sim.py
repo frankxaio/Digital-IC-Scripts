@@ -10,12 +10,16 @@ def main():
     output_file = os.path.join(root_path, "00_TESTBED", "rtl_sim.f")
     verilog_files = []
 
-    for dirpath, dirnames, filenames in os.walk(root_path):
-        for filename in filenames:
-            if filename.endswith(".v") or filename.endswith(".sv"):
-                full_path = os.path.join(dirpath, filename)
-                relative_path = os.path.relpath(full_path, root_path)
-                verilog_files.append(f"$ROOT_PATH/{relative_path}")
+    # Define the specific directories to search
+    search_dirs = [os.path.join(root_path, "00_TESTBED"), os.path.join(root_path, "01_RTL")]
+
+    for search_dir in search_dirs:
+        for dirpath, dirnames, filenames in os.walk(search_dir):
+            for filename in filenames:
+                if filename.endswith(".v") or filename.endswith(".sv"):
+                    full_path = os.path.join(dirpath, filename)
+                    relative_path = os.path.relpath(full_path, root_path)
+                    verilog_files.append(f"$ROOT_PATH/{relative_path}")
 
     # Sort for consistency
     verilog_files.sort()

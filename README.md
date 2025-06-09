@@ -1,1 +1,6 @@
-# Digital IC Script# Digital-IC-Script
+# Digital-IC-Script
+
+Reference from IC Lab 
+
+
+
