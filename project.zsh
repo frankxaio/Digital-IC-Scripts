@@ -13,10 +13,11 @@ NC='\033[0m' # No Color
 
 # -------------------- Paths --------------------------
 ROOT_PATH="$(pwd)"
-SCRIPT_PATH="$HOME/Dotfiles"
+SCRIPT_PATH="$HOME/Dotfiles/Scripts"
 SYN_FILE="$ROOT_PATH/02_SYN/syn.tcl"
 DESIGN_MAKE=$(grep -E '^top_design=' "$ROOT_PATH/00_TESTBED/Makefile" | cut -d'=' -f2 | tr -d ' ')
 DESIGN_SYN=$(grep -E '^set DESIGN ' "$SYN_FILE" | awk '{print $3}' | tr -d '"')
+SDC_FILE="$ROOT_PATH/02_SYN/$DESIGN_SYN.sdc"
 
 export ROOT_PATH
 
@@ -29,7 +30,7 @@ echo -e "${BLUE}| DESIGN        | ${NC}Makefile: ${YELLOW}$DESIGN_MAKE${NC}, Syn
 echo -e "${BLUE}| cd.zsh        | ${NC}0~9, m to switch folders; 2r -> syn report; 2n -> syn netlist"
 echo -e "${BLUE}| rtl           | ${NC}run RTL simulation"
 echo -e "${BLUE}| syn           | ${NC}run synthesis"
-echo -e "${BLUE}| cycle_syn     | ${NC}change synthesis cycle time, e.g. cycle_syn 10.0"
+echo -e "${BLUE}| c_syn         | ${NC}change synthesis cycle time, e.g. cycle_syn 10.0"
 echo -e "${BLUE}| gate          | ${NC}run gate simulation"
 echo -e "${BLUE}| post          | ${NC}run post simulation"
 echo -e "${BLUE}| check_syn     | ${NC}summarize synthesis results"
@@ -56,8 +57,9 @@ alias 2r="cd $ROOT_PATH/02_SYN/Report/"
 alias 2n="cd $ROOT_PATH/02_SYN/Netlist/"
 
 # -- Python Tools
-alias genrtl="python3 $SCRIPT_PATH/Python_script/gen_rtl_sim.py"
-alias gengate="python3 $SCRIPT_PATH/Python_script/gen_gate_sim.py"
+alias python="~/miniconda3/bin/python3" # replace python2 with python3 in conda
+alias genrtl="python $SCRIPT_PATH/utils/gen_rtl_sim.py"
+alias gengate="python $SCRIPT_PATH/utils/gen_gate_sim.py"
 
 # =====================================================
 # Functions
@@ -65,7 +67,8 @@ alias gengate="python3 $SCRIPT_PATH/Python_script/gen_gate_sim.py"
 
 check_syn() {
   source "$SCRIPT_PATH/cd.zsh" 2
-  source "$SCRIPT_PATH/check_syn.zsh"
+  python "$SCRIPT_PATH/synthesis/check_syn.py"
+
 }
 
 rtl() {
@@ -75,7 +78,7 @@ rtl() {
 
 syn() {
   source "$SCRIPT_PATH/cd.zsh" 2
-  make -f "$ROOT_PATH/02_SYN/Makefile" syn
+  make -f "$ROOT_PATH/02_SYN/Makefile" syn 2>&1 | grc -c ~/.grc/dcshell.conf cat
 }
 
 gate() {
@@ -130,24 +133,8 @@ rpt() {
   fi
 }
 
-cycle_syn() {
-  if [[ $# -eq 0 ]]; then
-    echo "${BLUE}Synthesis File: $SYN_FILE${NC}"
-    GREP_COLOR='01;32' cat -n "$SYN_FILE" | grep --color -E "set CYCLE [0-9]+\.?[0-9]*"
-    return 1
-  fi
-
-  echo "${BLUE}Synthesis File: $SYN_FILE${NC}"
-  CURRENT_CYCLE=$(grep -E "set CYCLE [0-9]+\.?[0-9]*" "$SYN_FILE" | grep -Eo "[0-9]+\.?[0-9]*")
-
-  if [[ "$CURRENT_CYCLE" == "$1" ]]; then
-    echo "${YELLOW}Cycle time is already $1. No change needed.${NC}"
-  else
-    GREP_COLOR='01;31' cat -n "$SYN_FILE" | grep --color -E "set CYCLE [0-9]+\.?[0-9]*"
-    sed -i "s/set CYCLE [0-9]\+\.\?[0-9]*/set CYCLE $1/" "$SYN_FILE"
-    GREP_COLOR='01;32' cat -n "$SYN_FILE" | grep --color -E "set CYCLE [0-9]+\.?[0-9]*"
-    echo "${GREEN}Changed cycle time to $1.${NC}"
-  fi
+c_syn() {
+  python "$SCRIPT_PATH/synthesis/cycle_syn.py" "$SYN_FILE" "$SDC_FILE" "$@"
 }
 
 prj_help() {
@@ -159,7 +146,7 @@ prj_help() {
   echo -e "${BLUE}| cd.zsh        | ${NC}0~9, m to switch folders; 2r -> syn report; 2n -> syn netlist"
   echo -e "${BLUE}| rtl           | ${NC}run RTL simulation"
   echo -e "${BLUE}| syn           | ${NC}run synthesis"
-  echo -e "${BLUE}| cycle_syn     | ${NC}change synthesis cycle time"
+  echo -e "${BLUE}| c_syn         | ${NC}change synthesis cycle time"
   echo -e "${BLUE}| gate          | ${NC}run gate simulation"
   echo -e "${BLUE}| post          | ${NC}run post simulation"
   echo -e "${BLUE}| check_syn     | ${NC}summarize synthesis results"

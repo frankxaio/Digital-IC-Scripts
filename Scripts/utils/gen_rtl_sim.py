@@ -1,11 +1,12 @@
-#!/usr/bin/env python3
+#!/home/host/miniconda3/bin/python
 import os
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from config import get_root_path, print_success
 
 def main():
-    root_path = os.environ.get("ROOT_PATH")
-    if not root_path:
-        print("❌ Error: ROOT_PATH environment variable not set.")
-        return
+    root_path = get_root_path()
 
     output_file = os.path.join(root_path, "00_TESTBED", "rtl_sim.f")
     verilog_files = []
@@ -29,7 +30,15 @@ def main():
         for line in verilog_files:
             f.write(line + "\n")
 
-    print(f"✅ File list written to: {output_file}")
+    print_success(f"✅ File list written to: {output_file}")
+    
+    # Print the contents of the generated file
+    print("\n📄 Contents of rtl_sim.f:")
+    print("=" * 50)
+    with open(output_file, "r") as f:
+        for line in f:
+            print(line.rstrip())
+    print("=" * 50)
 
 if __name__ == "__main__":
     main()

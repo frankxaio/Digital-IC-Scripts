@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# This shebang invokes the 'python' interpreter found first in your $PATH.
 
 """
 Print colored, nicely-framed Design-Compiler *.area and *.timing reports
