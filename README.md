@@ -1,4 +1,4 @@
-# Digital-IC-Script
+# Digital-IC-Scripts
 
 Reference from IC Lab 
 
