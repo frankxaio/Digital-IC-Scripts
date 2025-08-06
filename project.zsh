@@ -30,6 +30,7 @@ echo -e "${BLUE}| DESIGN        | ${NC}Makefile: ${YELLOW}$DESIGN_MAKE${NC}, Syn
 echo -e "${BLUE}| cd.zsh        | ${NC}0~9, m to switch folders; 2r -> syn report; 2n -> syn netlist"
 echo -e "${BLUE}| rtl           | ${NC}run RTL simulation"
 echo -e "${BLUE}| syn           | ${NC}run synthesis"
+echo -e "${BLUE}| change_design | ${NC}change desing name"
 echo -e "${BLUE}| c_syn         | ${NC}change synthesis cycle time, e.g. cycle_syn 10.0"
 echo -e "${BLUE}| gate          | ${NC}run gate simulation"
 echo -e "${BLUE}| post          | ${NC}run post simulation"
@@ -37,6 +38,8 @@ echo -e "${BLUE}| check_syn     | ${NC}summarize synthesis results"
 echo -e "${BLUE}| rpt           | ${NC}cat all files in \$ROOT_PATH/02_SYN/Report/*.ext"
 echo -e "${BLUE}| genrtl        | ${NC}generate rtl simulation files"
 echo -e "${BLUE}| gengate       | ${NC}generate gate simulation files"
+echo -e "${BLUE}| clean         | ${NC}clean current directory"
+echo -e "${BLUE}| clean0123     | ${NC}clean 00_TESTBED, 01_RTL, 02_SYN, 03_GATE"
 echo -e "${BLUE}| link_mk       | ${NC}link Makefile to current directory"
 echo -e "${GREEN}+---------------+----------------------------------------------------------------+${NC}"
 
@@ -91,6 +94,35 @@ post() {
   make -f "$ROOT_PATH/06_POST/Makefile" gate 2>&1 | grc -c ~/.grc/vcs.conf cat
 }
 
+clean () {
+  echo -e "${BLUE}🧹 Cleaning current directory...${NC}"
+  make -f "$ROOT_PATH/00_TESTBED/Makefile" clean > /dev/null 2>&1
+}
+
+clean0123() {
+  echo -e "${BLUE}🧹 Cleaning 00_TESTBED...${NC}"
+  source "$SCRIPT_PATH/cd.zsh" 0
+  make -f "$ROOT_PATH/00_TESTBED/Makefile" clean >/dev/null 2>&1
+  echo -e "${GREEN}✅ 00_TESTBED cleaned${NC}"
+  
+  echo -e "${BLUE}🧹 Cleaning 01_RTL...${NC}"
+  source "$SCRIPT_PATH/cd.zsh" 1
+  make -f "$ROOT_PATH/01_RTL/Makefile" clean >/dev/null 2>&1
+  echo -e "${GREEN}✅ 01_RTL cleaned${NC}"
+  
+  echo -e "${BLUE}🧹 Cleaning 02_SYN...${NC}"
+  source "$SCRIPT_PATH/cd.zsh" 2
+  make -f "$ROOT_PATH/02_SYN/Makefile" clean >/dev/null 2>&1
+  echo -e "${GREEN}✅ 02_SYN cleaned${NC}"
+  
+  echo -e "${BLUE}🧹 Cleaning 03_GATE...${NC}"
+  source "$SCRIPT_PATH/cd.zsh" 3
+  make -f "$ROOT_PATH/03_GATE/Makefile" clean >/dev/null 2>&1
+  echo -e "${GREEN}✅ 03_GATE cleaned${NC}"
+  
+  echo -e "${GREEN}🎉 All directories cleaned successfully!${NC}"
+}
+
 link_mk() {
   local current_dir="${PWD##*/}"
 
@@ -137,6 +169,38 @@ c_syn() {
   python "$SCRIPT_PATH/synthesis/cycle_syn.py" "$SYN_FILE" "$SDC_FILE" "$@"
 }
 
+change_design() {
+  if [[ -z $1 ]]; then
+    echo "🔧 Design Name Changer"
+    echo "Usage:"
+    echo "  change_design show                    # Show current design names"
+    echo "  change_design <new_design_name>       # Change design name"
+    echo "  change_design --help                  # Show this help"
+    return
+  fi
+  
+  if [[ $1 == "--help" || $1 == "-h" || $1 == "help" ]]; then
+    echo "🔧 Design Name Changer"
+    echo "This function modifies the design name in both Makefile and syn.tcl files."
+    echo ""
+    echo "Usage:"
+    echo "  change_design show                    # Show current design names"
+    echo "  change_design <new_design_name>       # Change design name"
+    echo "  change_design --help                  # Show this help"
+    echo ""
+    echo "Examples:"
+    echo "  change_design show"
+    echo "  change_design my_design"
+    echo "  change_design processor_v2"
+    return
+  fi
+  
+  # Change to Design directory and run the Python script
+  cd "$ROOT_PATH"
+  python "$SCRIPT_PATH/utils/change_design.py" "$@"
+}
+
+
 prj_help() {
   echo -e "${GREEN}+---------------+----------------------------------------------------------------+${NC}"
   echo -e "${GREEN}| COMMAND       | DESCRIPTION                                                    |${NC}"
@@ -146,13 +210,16 @@ prj_help() {
   echo -e "${BLUE}| cd.zsh        | ${NC}0~9, m to switch folders; 2r -> syn report; 2n -> syn netlist"
   echo -e "${BLUE}| rtl           | ${NC}run RTL simulation"
   echo -e "${BLUE}| syn           | ${NC}run synthesis"
-  echo -e "${BLUE}| c_syn         | ${NC}change synthesis cycle time"
+  echo -e "${BLUE}| change_design | ${NC}change desing name"
+  echo -e "${BLUE}| c_syn         | ${NC}change synthesis cycle time, e.g. cycle_syn 10.0"
   echo -e "${BLUE}| gate          | ${NC}run gate simulation"
   echo -e "${BLUE}| post          | ${NC}run post simulation"
   echo -e "${BLUE}| check_syn     | ${NC}summarize synthesis results"
-  echo -e "${BLUE}| rpt           | ${NC}print *.ext files in 02_SYN/Report"
-  echo -e "${BLUE}| genrtl        | ${NC}generate rtl sim files"
-  echo -e "${BLUE}| gengate       | ${NC}generate gate sim files"
-  echo -e "${BLUE}| link_mk       | ${NC}symlink Makefile to local folder"
+  echo -e "${BLUE}| rpt           | ${NC}cat all files in \$ROOT_PATH/02_SYN/Report/*.ext"
+  echo -e "${BLUE}| genrtl        | ${NC}generate rtl simulation files"
+  echo -e "${BLUE}| gengate       | ${NC}generate gate simulation files"
+  echo -e "${BLUE}| clean         | ${NC}clean current directory"
+  echo -e "${BLUE}| clean0123     | ${NC}clean 00_TESTBED, 01_RTL, 02_SYN, 03_GATE"
+  echo -e "${BLUE}| link_mk       | ${NC}link Makefile to current directory"
   echo -e "${GREEN}+---------------+----------------------------------------------------------------+${NC}"
 }
